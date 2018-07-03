@@ -1,3 +1,5 @@
+require 'googleauth'
+
 module CloudPrint
   class Client
     attr_reader :client_secret
