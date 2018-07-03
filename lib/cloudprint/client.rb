@@ -41,7 +41,7 @@ module CloudPrint
 
     def access_token_valid?
       if service_account?
-        @google_auth_client.access_token && !@google_auth_client.expired?
+        google_auth_client.access_token && !google_auth_client.expired?
       else
         @access_token.is_a?(OAuth2::AccessToken) && !@access_token.token.to_s.strip.empty? && !@access_token.expired?
       end
