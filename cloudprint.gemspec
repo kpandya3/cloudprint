@@ -15,7 +15,7 @@ This library provides a Ruby interface to Google Cloud Print.
 cloudprint is a work in progress. I'll be adding documentation once all the basic GCP functionality is supported."
 DESC
 
-  s.add_dependency 'google-auth'
+  s.add_dependency 'googleauth', '>= 0.6.0'
   s.add_dependency 'oauth2', '>= 1.0.0'
   s.add_dependency 'json'
 
