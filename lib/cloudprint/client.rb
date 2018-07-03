@@ -41,7 +41,7 @@ module CloudPrint
 
     def access_token_valid?
       if service_account?
-        @authorizer.access_token && !@authorizer.expired?
+        @google_auth_client.access_token && !@google_auth_client.expired?
       else
         @access_token.is_a?(OAuth2::AccessToken) && !@access_token.token.to_s.strip.empty? && !@access_token.expired?
       end
@@ -75,10 +75,10 @@ module CloudPrint
     def renew_access_token!
       @access_token = begin
         if service_account?
-          OAuth2::AccessToken.new(oauth_client, "", :refresh_token => refresh_token).refresh!
-        else
           google_auth_client.fetch_access_token!
           google_auth_client.access_token
+        else
+          OAuth2::AccessToken.new(oauth_client, "", :refresh_token => refresh_token).refresh!
         end
       end
     end
