@@ -10,6 +10,7 @@ module CloudPrint
 
     def initialize(options = {})
       @access_token = nil
+      @service_account_creds = options[:service_account_creds]
       @refresh_token = options[:refresh_token]
       @client_id = options[:client_id]
       @client_secret = options[:client_secret]
@@ -25,7 +26,12 @@ module CloudPrint
     end
 
     def access_token
-      (access_token_valid? && @access_token || renew_access_token!).token
+      if service_account?
+        access_token_valid? || renew_access_token!
+        google_auth_client.access_token
+      else
+        (access_token_valid? && @access_token || renew_access_token!).token
+      end
     end
 
     def refresh_token=(new_token)
@@ -34,7 +40,11 @@ module CloudPrint
     end
 
     def access_token_valid?
-      @access_token.is_a?(OAuth2::AccessToken) && !@access_token.token.to_s.strip.empty? && !@access_token.expired?
+      if service_account?
+        @authorizer.access_token && !@authorizer.expired?
+      else
+        @access_token.is_a?(OAuth2::AccessToken) && !@access_token.token.to_s.strip.empty? && !@access_token.expired?
+      end
     end
 
     def oauth_client
@@ -47,10 +57,30 @@ module CloudPrint
       )
     end
 
+    def google_auth_client
+      @google_auth_client ||= begin
+        Google::Auth::ServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(@service_account_creds.to_json),
+          scope: 'https://www.googleapis.com/auth/cloudprint'
+        )
+      end
+    end
+
     private
 
+    def service_account?
+      @service_account_creds.present?
+    end
+
     def renew_access_token!
-      @access_token = OAuth2::AccessToken.new(oauth_client, "", :refresh_token => refresh_token).refresh!
+      @access_token = begin
+        if service_account?
+          OAuth2::AccessToken.new(oauth_client, "", :refresh_token => refresh_token).refresh!
+        else
+          google_auth_client.fetch_access_token!
+          google_auth_client.access_token
+        end
+      end
     end
 
   end
